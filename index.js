@@ -115,12 +115,12 @@ app.post('/api/persons', (req, res) => {
 
 // Middleware - jos käyttäjä eksyy olemattomalle sivulle
 const unknownEndpoint = (request, response) => {
-    response.status(404).send('<h1>Here is nothing</h1>')
+    response.status(404).send('<h1>Here is nothing</h1> <p>Try this https://puhluet.herokuapp.com/api/persons</p>')
 }
 app.use(unknownEndpoint)
 
-// kuuntelijan pitää kuunella porttia aina, jotta back-end osaisi vastata pyyntöihin
-// 3001 vastakohta on ympäristömuuttujassa PORT määritetty portti
+// kuuntelijan pitää kuunella porttia aina, jotta backend osaisi vastata pyyntöihin
+// process.env.PORT on ympäristömuuttuja, jonka Heroku määrittää itse, ja luo yhteyden sitä kautta
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
