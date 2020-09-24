@@ -115,7 +115,8 @@ app.post('/api/persons', (req, res) => {
 
 // Middleware - jos käyttäjä eksyy olemattomalle sivulle
 const unknownEndpoint = (request, response) => {
-    response.status(404).send('<h1>Here is nothing</h1> <p>Try this https://puhluet.herokuapp.com/api/persons</p>')
+    response.status(404).send(
+      '<h1>Here is nothing</h1> <a href="https://puhluet.herokuapp.com/api/persons">Try this</a>')
 }
 app.use(unknownEndpoint)
 
