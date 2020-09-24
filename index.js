@@ -9,6 +9,8 @@ const morgan = require('morgan')
 
 // json-parseri. Tällä päästään requestin mukana tulleeseen dataan käsiksi
 app.use(express.json()) 
+
+// tällä saadaan loggaus ulos terminaalissa
 app.use(morgan('tiny'))
 
 // jos haluaa muokata taulukkoa, niin pitää olla "let"
