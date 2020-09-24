@@ -3,15 +3,21 @@
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
+const cors = require('cors')
 
+// npm init
 // asenna myös npm install --save-dev nodemon
 // kehitysaikainen tiedoston päivitys
+// Same origin policy onglema tulee etee. Asenettava "npm install cors" backendiin 
 
 // json-parseri. Tällä päästään requestin mukana tulleeseen dataan käsiksi
 app.use(express.json()) 
 
-// tällä saadaan loggaus ulos terminaalissa
+// tällä saadaan loggaus ulos terminaalissa. Näkee, mitä hakuja on tehty
 app.use(morgan('tiny'))
+
+// sallii porttien 3000 ja 3001 kommunikointia keskenään
+app.use(cors())
 
 // jos haluaa muokata taulukkoa, niin pitää olla "let"
 let persons = [
@@ -35,6 +41,11 @@ let persons = [
       "name": "Mary Poppendieck", 
       "number": "39-23-6423122",
       "id": 4
+    },
+    { 
+      "name": "Juho Kemppainen", 
+      "number": "0506 3858294",
+      "id": 5
     }
 ]
 
@@ -80,7 +91,7 @@ const generateId = () => {
 // POST - uuden tiedon lisäys
 app.post('/api/persons', (req, res) => {
     const body = req.body
-    //console.log(body);
+    console.log(body);
    
     const newRecord = {
         name: body.name,
@@ -109,7 +120,8 @@ const unknownEndpoint = (request, response) => {
 app.use(unknownEndpoint)
 
 // kuuntelijan pitää kuunella porttia aina, jotta back-end osaisi vastata pyyntöihin
-const PORT = 3001
+// 3001 vastakohta on ympäristömuuttujassa PORT määritetty portti
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
