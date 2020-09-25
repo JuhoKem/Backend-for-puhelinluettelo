@@ -16,8 +16,13 @@ app.use(express.json())
 // tällä saadaan loggaus ulos terminaalissa. Näkee, mitä hakuja on tehty
 app.use(morgan('tiny'))
 
-// sallii porttien 3000 ja 3001 kommunikointia keskenään
+// sallii porttien 3000 ja 3001 kommunikointia keskenään. Same origin policy
 app.use(cors())
+
+// frontend tuotantoversion staattisen sisällön käyttäminen backendissa
+// eli kopioitiin "build"-kansio frontista backendin juureen ja otettiin se käyttöön
+// tällä tarkistetaan, että front ja back toimii hyvin paikallisesti eli omalla koneella
+app.use(express.static('build'))
 
 // jos haluaa muokata taulukkoa, niin pitää olla "let"
 let persons = [
