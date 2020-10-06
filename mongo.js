@@ -9,9 +9,9 @@ const mongoose = require('mongoose')
 // MongoDb:ssa ei ole pakko luoda tietokantaa hallintanäkymässä, se voi tehdä sen automaattisesti
 
 if (process.argv.length<3) {
-    console.log('give at least password as argument')
-    process.exit(1)
-  }
+  console.log('give at least password as argument')
+  process.exit(1)
+}
 // ympäristömuuttujat
 const password = process.argv[2]
 const name = process.argv[3]
@@ -39,24 +39,22 @@ const record = new Record({
   number: number
 })
 
-// toimiakseen ehtolauseen pitää olla schema ja model luomisen jälkeen 
+// toimiakseen ehtolauseen pitää olla schema ja model luomisen jälkeen
 if (process.argv.length<4) {
-  
-    Record.find({}).then(result => {
-        console.log('phonebook:')
-      result.forEach(record => {
-        console.log( record.name, record.number);
-      })
-      mongoose.connection.close()
+  Record.find({}).then(result => {
+    console.log('phonebook:')
+    result.forEach(record => {
+      console.log( record.name, record.number)
     })
-  }
+    mongoose.connection.close()
+  })
+}
 else {
-    // MongoDb tallentaa 
-    record.save().then(response => {
-        console.log('added', response.name, 'number', response.number, 'to phonebook')
-        mongoose.connection.close()
+// MongoDb tallentaa
+  record.save().then(response => {
+    console.log('added', response.name, 'number', response.number, 'to phonebook')
+    mongoose.connection.close()
   })
 }
 
 // 3.12
-// 
