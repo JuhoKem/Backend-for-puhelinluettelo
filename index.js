@@ -1,26 +1,27 @@
 // Node ja Express-kirjasto
-// tämä tulee tehdä, kun "npm install express --save" on tehty
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
+const Record = require('./models/recordSave')
 
 // npm init
-// asenna myös npm install --save-dev nodemon
-// kehitysaikainen tiedoston päivitys
+// npm install express --save
+// npm install --save-dev nodemon - kehitysaikainen tiedoston päivitys
 // Same origin policy onglema tulee etee. Asenettava "npm install cors" backendiin 
+
+// sallii porttien 3000 ja 3001 kommunikointia keskenään. "Same origin policy"
+app.use(cors())
 
 // json-parseri. Tällä päästään requestin mukana tulleeseen dataan käsiksi
 app.use(express.json()) 
 
-// tällä saadaan loggaus ulos terminaalissa. Näkee, mitä hakuja on tehty
+// tällä saadaan loggaus ulos terminaalissa. Näkee, mitä pyyntojä on tehty
 app.use(morgan('tiny'))
 
-// sallii porttien 3000 ja 3001 kommunikointia keskenään. Same origin policy
-app.use(cors())
-
 // frontend tuotantoversion staattisen sisällön käyttäminen backendissa
-// eli kopioitiin "build"-kansio frontista backendin juureen ja otettiin se käyttöön
+// eli kopioitiin "build"-kansio frontista backendin juureen ja otettiin se käyttöön.
 // tällä tarkistetaan, että front ja back toimii hyvin paikallisesti eli omalla koneella
 app.use(express.static('build'))
 
@@ -54,38 +55,51 @@ let persons = [
     }
 ]
 
-// GET - kaikki data
-app.get('/api/persons', (req, res) => {
-    res.json(persons)
+// GET - kaikki data. Tehty mongoosea käyttäen
+app.get('/api/persons', (req, res, next) => {
+  Record.find({}).then(results => {
+    res.json(results.map(r => r.toJSON()))
+  })
+  .catch(error => next(error))
+  // mongoose.connection.close() <-- tarvitaanko tätä?
 })
 
 // GET - info sivu
-app.get('/info', (req, res) => {
-    res.send(`<p>Phonebook has info for <strong> ${persons.length} </strong> people</p> 
-    ${new Date()}`)
+app.get('/info', (req, res, next) => {
+  Record
+    .countDocuments()
+    .then(results => {
+      res.send(`<p>Phonebook has info for <strong> ${results} </strong> people</p> ${new Date()}`)
+  })
+  .catch(error => next(error))
 
 })
 
 // GET - yksittäinen ID
-app.get('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const person = persons.find(p => p.id === id)
-
-    if (person) {
-        res.json(person)
-      } else {
-        res.status(404).end()
-      }
-
-})
-
-//DELETE - poisto
-app.delete('/api/persons/:id', (req, res) => {
-    const id = Number(req.params.id)
-    persons = persons.filter(p => p.id !== id)
+// jos on virheidenkäsittelijä, joka siirttä sen eteenpäin, niin pitää olla next-parametri
+app.get('/api/persons/:id', (req, res, next) => {
   
-    res.status(204).end()
+  Record.findById(req.params.id)
+  .then(record => {
+    if (record) {
+      res.json(record.toJSON())
+    } else {
+      res.status(404).end()
+    }
+  })
+  .catch(error => next(error))
 })
+
+//DELETE - poisto ID:n perusteella  --> kun testataan poisto, niin syötetään URl:iin MongoDb:n id
+app.delete('/api/persons/:id', (req, res, next) => {
+  Record.findByIdAndRemove(req.params.id)
+    .then(result => {
+      res.status(204).end()
+    })
+    .catch(error => next(error))
+
+})
+/*
 // generoi ID:n
 const generateId = () => {
     const maxId = persons.length > 0
@@ -93,41 +107,60 @@ const generateId = () => {
         : 0
     return maxId + 1
 }
-// POST - uuden tiedon lisäys
-app.post('/api/persons', (req, res) => {
+*/
+
+// POST - uuden tietueen lisäys
+app.post('/api/persons', (req, res, next) => {
     const body = req.body
     console.log(body);
-   
-    const newRecord = {
-        name: body.name,
-        number: body.number,
-        id: generateId()
-    }
 
-    if (!body.name || !body.number) {
-        // return on oltava, muuten koodi jatkaa suoritusta loppuun asti
-        return(res.status(404).json({error : 'content missing'}))
-    }
-    // jos nimi on jo olemassa 
-    if (persons.find(p => p.name === newRecord.name)) {
-        return(res.status(400).json({error : 'name must be unique'}))
-    }
+  if (body.name === undefined) {
+    // returnin on oltava, muuten koodi jatkaa suoritusta loppuun asti
+    return res.status(400).json({error : 'content missing'})
+  }
 
-    persons = persons.concat(newRecord)
-
-    res.json(newRecord)
+    // luodaan uusi muistiinpano
+  const newRecord = new Record({
+      name: body.name,
+      number: body.number
+      //id: generateId()
+  })
+    newRecord.save()
+      .then(savedRecord => savedRecord.toJSON())
+      .then(savedRecord => {
+        res.json(savedRecord)
+      })
+      .catch(error => next(error))
 })
 
-// Middleware - jos käyttäjä eksyy olemattomalle sivulle
+// **************** Middleware - jos käyttäjä eksyy olemattomalle sivulle ******************
 const unknownEndpoint = (request, response) => {
-    response.status(404).send(
-      '<h1>Here is nothing</h1> <a href="https://puhluet.herokuapp.com/api/persons">Try this</a>')
+  response.status(404).send(
+    '<h1>Here is nothing</h1> <a href="https://puhluet.herokuapp.com/api/persons">Try this</a>')
 }
+// on tärkeää, että middleware otetaan käyttöön tietyissä paikkoissa
 app.use(unknownEndpoint)
 
+// **************** Virheenkäsittelijä - siirtää kaikki virheet next()-funktiolla *********
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+  else if (error.name === 'ValidationError') {
+    return response.status(409).send({ error: 'The name you tried to add is already exist. Give another one.' })
+  }
+
+  next(error)
+}
+app.use(errorHandler)
+// **************************************************************************************
+
 // kuuntelijan pitää kuunella porttia aina, jotta backend osaisi vastata pyyntöihin
-// process.env.PORT on ympäristömuuttuja, jonka Heroku määrittää itse, ja luo yhteyden sitä kautta
-const PORT = process.env.PORT || 3001
+// process.env.PORT on ympäristömuuttuja, joka on .env-tiedostossa ja jonka Heroku määrittää itse, 
+// ja luo yhteyden sitä kautta
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
@@ -135,3 +168,8 @@ app.listen(PORT, () => {
 
 // 3.1 - 3.6
 // 3.7
+// 3.9 - 3.11
+// 3.12
+// 3.13 - 3.14
+// 3.15, 3.16, 3.18
+// 3.19 - 3.21

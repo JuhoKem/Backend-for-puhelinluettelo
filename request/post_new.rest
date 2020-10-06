@@ -1,7 +1,8 @@
+// kun käytät paikallisesti, varmista että portti on oikea, eli 3000 tai 3001
 POST http://localhost:3001/api/persons
 Content-Type: application/json
 
 {
-    "name": "Aku Ankka",
-    "number": "+358 40 102 6654"
+    "name": "Anna",
+    "number": "4564111111"
 }

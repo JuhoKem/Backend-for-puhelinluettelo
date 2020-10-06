@@ -1,1 +1,2 @@
-DELETE http://localhost:3001/api/persons/5
+// kun käytät paikallisesti, varmista että portti on oikea, eli 3000 tai 3001
+DELETE http://localhost:3001/api/persons/5f79bcb519009f18a954b0e6
