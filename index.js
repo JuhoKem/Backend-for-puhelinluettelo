@@ -10,6 +10,8 @@ const Record = require('./models/recordSave')
 // npm install express --save
 // npm install --save-dev nodemon - kehitysaikainen tiedoston päivitys
 // Same origin policy onglema tulee etee. Asenettava "npm install cors" backendiin 
+// jos haluaa herokun toimivan tietokannan kanssa, pitää tehdä komentorivillä komento
+// heroku config:set MONGODB_URI = mongodb+srv://ptz_:310385@cluster0.utgqg.mongodb.net/phonebook?retryWrites=true&w=majority
 
 // sallii porttien 3000 ja 3001 kommunikointia keskenään. "Same origin policy"
 app.use(cors())
